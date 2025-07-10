@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>필름 주문 계산기</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-jp.css');
+    body {
+      background: #f7f8fa;
+      font-family: 'Pretendard Variable', Pretendard, NotoSans, Apple SD Gothic Neo, sans-serif;
+      margin: 0; min-height: 100vh;
+    }
+    .main { max-width: 1200px; margin: 56px auto 36px auto; padding: 0 16px;}
+    .royal-card {
+      background: #fff; border-radius: 22px; box-shadow: 0 8px 32px rgba(80, 96, 131, 0.08);
+      border: 1.5px solid #eef1f5; padding: 38px 44px 36px 44px; margin-bottom: 30px;
+    }
+    .section-title {
+      font-size: 1.45rem; font-weight: 700; color: #304364;
+      margin-bottom: 17px; letter-spacing: -0.5px; text-align:left;
+    }
+    /* 필름 선택 구역 */
+    .film-type-row {
+      display: flex; align-items: center; gap: 18px; margin-bottom: 13px;
+    }
+    .film-type-row label {
+      font-size: 1.13em; font-weight: 700; color: #304364; min-width: 88px;
+    }
+    .film-type-row select {
+      border: 1.5px solid #e2e6ed; background: #f6f8fa; font-size: 1.08em; color: #36405b;
+      font-family: inherit; border-radius: 9px; outline:none; transition: border 0.14s;
+      padding: 11px 21px; width: 100%; min-width: 400px; font-weight:600;
+      max-width: 720px; /* 아주 넓게! */
+      box-sizing: border-box;
+    }
+    .film-type-row select:focus { border:1.5px solid #304364;}
+    .input-bar {
+      display: flex; gap: 13px; align-items: center; margin-bottom: 26px;
+    }
+    .input-bar input[type=number] {
+      border: 1.5px solid #e2e6ed; background: #f6f8fa; font-size: 1.07em; color: #36405b;
+      font-family: inherit; border-radius: 9px; outline:none; transition: border 0.14s;
+      padding: 9px 17px; width: 120px;
+    }
+    .input-bar input[type=number]:focus { border:1.5px solid #304364;}
+    .add-btn {
+      background: #2b3551;
+      color: #fff; border: none; border-radius: 10px; font-weight: 700; font-size: 1.11em;
+      padding: 10px 38px; cursor: pointer; letter-spacing: 1.1px;
+      box-shadow: 0 2px 6px rgba(80,96,131,.08); transition: background 0.14s;
+      margin-left: 7px;
+    }
+    .add-btn:hover { background: #415278; }
+    .grid { display: flex; gap: 38px; }
+    .royal-table-card {
+      flex:1; background: #fafbfc; border-radius: 18px; border: 1.3px solid #e6eaf2;
+      padding: 21px 23px 17px 23px; min-width: 340px; box-shadow: 0 2px 8px 0 rgba(80,96,131,.03);
+      display:flex; flex-direction:column; justify-content:stretch; min-height:260px;
+    }
+    .royal-table-card.final {
+    border: 2.5px solid #2b3551 !important;
+    box-shadow: 0 2px 8px 0 rgba(217,191,104,.08);
+    }
+
+    .card-title {
+      font-size: 1.12em; font-weight: 700; color: #304364;
+      margin-bottom: 13px; letter-spacing: -0.2px; padding-left: 4px;
+    }
+    table {
+      border-collapse: separate; border-spacing: 0 8px;
+      width: 100%; font-size: 1.08em; table-layout: fixed;
+    }
+    th, td {
+      border: none; padding: 9px 7px; text-align: left; font-weight: 500; background: none; vertical-align: middle;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+    th {
+      color: #304364; font-size: 1.05em; background: #f1f2f5; border-radius: 7px;
+      font-weight: 700; letter-spacing: -0.7px; border-bottom: 2.2px solid #e4e6ec;
+    }
+    tr {
+      background: #fff; border-radius: 10px; box-shadow: 0 1.5px 7px 0 rgba(80,96,131,.04);
+    }
+    td {
+      color: #425066; font-weight: 500;
+      max-width: 290px;
+      font-size: 1.08em;
+    }
+    .film-short { font-weight:700; color:#2a3342;}
+    .film-tooltip {
+      cursor: pointer;
+      display: inline-block;
+      margin-left: 6px;
+      vertical-align: middle;
+      width: 19px; height: 19px;
+      border-radius: 50%;
+      background: #fffbe9;
+      text-align: center; line-height: 19px;
+      font-size: 15px;
+      color: #bfa24a;
+      border: 1.7px solid #f4e5c3;
+      font-family: inherit;
+      font-weight: bold;
+      box-shadow: 0 2px 7px 0 rgba(217,191,104,0.09);
+      transition: background 0.17s, color 0.13s, border 0.13s;
+      vertical-align: 3px; /* 또는 -3px로 미세 조정! */
+    }
+    .film-tooltip:hover {
+      background: #fff5c1;
+      color: #bfa24a;
+      border-color: #edd48a;
+    }
+    .film-tooltip > span {
+      font-size: 13px;
+      color: #bfa24a;
+      display:inline-block;
+      vertical-align: middle;
+      line-height: 19px;
+      font-weight: bold;
+    }
+    .del-btn {
+    background: none; border: none; color: #cfa324; font-weight: bold;
+    font-size: 1.25em; cursor: pointer; margin-left: 0; border-radius: 50%;
+    min-width: 25px; min-height: 25px; width: 25px; height: 25px; display: inline-flex;
+    align-items: center; justify-content: center; line-height: 1; padding: 0;
+    transition: background 0.17s; outline: none; overflow: hidden;
+    }
+    .del-btn:after {
+    display: none !important; /* 혹시라도 남은 잔상 방지 */
+    }
+    th:last-child, td:last-child {
+    width: 34px !important;
+    min-width: 34px !important;
+    max-width: 34px !important;
+    padding-right: 0 !important;
+    overflow: visible !important;
+    }
+    .del-btn:hover { background:#fff7de; color:#a1861c; }
+    .arrow {
+      font-size: 2.6em; color: #cfb24b; margin: 0 13px; align-self: center; user-select:none; font-weight:900;
+      display: flex; align-items: center; justify-content:center; min-width:55px;
+    }
+    .calc-btn {
+      margin: 38px 0 0 0; padding: 21px 0; width: 100%; font-size: 1.21em; font-weight: 700; border-radius: 13px;
+      background: #2b3551; color: #fff; border: none; letter-spacing: 1.2px; cursor: pointer;
+      box-shadow: 0 2px 13px 0 rgba(80,96,131,.06); transition: background 0.16s;
+    }
+    .calc-btn:hover { background: #415278; }
+    .result-card {
+      margin: 36px 0 0 0; background: #fffdf6; border: 1.5px solid #f4e5c3;
+      border-radius: 16px; padding: 34px 48px 30px 48px; font-size: 1.20em;
+      color: #304364; font-weight: 700; letter-spacing: 0.8px; box-shadow:0 2px 11px 0 rgba(217,191,104,0.08);
+      display:none; text-align:center; min-width:300px;
+    }
+    .result-label { color:#bfa24a; font-size:1.15em; letter-spacing:1px; margin:0 0 6px 0;}
+    .result-value { font-size:2.35em; color:#2b3551; font-weight:900; letter-spacing:3px;}
+    /* 팝업 */
+    .popup-bg {
+      position: fixed; left:0; top:0; width:100vw; height:100vh;
+      background: rgba(0,0,0,0.21); display: none; align-items: center; justify-content: center; z-index: 99;
+    }
+    .popup {
+      background: #fffefb; padding: 41px 56px 33px 56px; border-radius: 18px;
+      box-shadow: 0 14px 42px 0 rgba(80,96,131,0.14); min-width: 430px; max-width: 97vw; border: 2.5px solid #f7e9b7;
+      font-size: 1.15em;
+    }
+    .popup-title { font-size: 1.22em; font-weight: 700; color: #af9728; margin-bottom: 13px; letter-spacing:-0.7px; line-height:1.2;}
+    .popup-detail { color:#304364; font-size:1.09em; font-weight:500; margin-bottom: 6px;}
+    .popup-desc {
+      font-size:1em; color:#bfa24a; margin-bottom:10px; line-height:1.5;
+    }
+    .popup-btns { margin-top: 14px; display: flex; flex-direction:column; gap: 16px; }
+    .popup-btns button {
+      font-size: 1.11em; font-weight: 700; padding: 17px 0;
+      border-radius: 13px; border: none; cursor: pointer;
+      background: #2b3551;
+      color: #fff; box-shadow: 0 2px 8px 0 rgba(80,96,131,.06); transition: background 0.13s; letter-spacing: 1.1px;
+      margin: 0;
+    }
+    .popup-btns button:hover { background: #415278; }
+    .popup-btns .gray-btn {
+      background: #fff; color: #bfa24a; font-weight: 700; border:1.5px solid #edd48a; box-shadow:none;
+    }
+    .popup-btns .gray-btn:hover { background: #fcf5e2; color:#bfa24a;}
+    /* RoyalSeries 로딩바 스타일 */
+    .royal-loader {
+    text-align: center; width: 280px; padding: 40px 32px 32px 32px;
+    background: #fff; border-radius: 24px; box-shadow: 0 8px 32px rgba(80, 96, 131, 0.10);
+    border: 1.5px solid #eef1f5; position: fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+    z-index:1001;
+    }
+    .loading-bg {
+    display: none; /* ✅ 기본적으로 안 보이게 설정됨 */
+    position: fixed;
+    left: 0; top: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(255,255,255,0.74);
+    z-index: 1000;
+    }
+    .loading-bg[style*="display: none"],
+    .popup-bg[style*="display: none"] {
+      pointer-events: none !important;
+    }
+    .brand {
+    font-size: 1.4rem; font-weight: 700; color: #33405a;
+    letter-spacing: 2px; margin-bottom: 28px;
+    }
+    .bar-wrap {
+    background: #e8ebef; border-radius: 8px; height: 10px;
+    overflow: hidden; position: relative;
+    }
+    .bar-inner {
+    background: linear-gradient(90deg, #000000, #919191 90%);
+    width: 0; height: 100%; border-radius: 8px;
+    animation: loadingMove 2.2s cubic-bezier(.4,.2,.6,1) infinite;
+    }
+    @keyframes loadingMove {
+    0% { width: 0; }
+    60% { width: 90%; }
+    100% { width: 100%; }
+    }
+    .loading-text {
+    font-size: 1em; color: #7c8599;
+    margin-top: 18px; letter-spacing: 1px;
+    }
+
+
+    @media (max-width:1200px) {
+      .main { max-width:97vw;}
+      .royal-card{padding:3vw;}
+      .film-type-row select {min-width:300px;}
+    }
+    @media (max-width: 1030px) and (min-width: 600px) {
+      .main {
+        margin: 32px auto 20px auto !important;   /* 위쪽 32px, 아래 20px */
+        padding: 0 3vw;
+        max-width: 98vw;
+      }
+      .royal-card {
+        padding: 3vw 2vw 5vw 2vw;
+        margin: 0;
+      }
+    }
+    @media (max-width: 1030px) {
+      .grid {
+        flex-direction: column;
+        gap: 15px;
+        width: 100%;
+      }
+      .royal-table-card,
+      .royal-table-card.final {
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+      }
+      #direction-arrow {
+        margin: 8px 0 !important;
+        font-size: 2em !important;
+        min-width: 0 !important;
+        justify-content: center !important;
+        align-items: center !important;
+        display: flex !important;
+      }
+    }
+
+    @media (max-width:900px) {
+      .main {padding: 0 1vw;}
+      .grid { flex-direction: column; gap:15px;}
+      .royal-table-card {padding:5vw 3vw 6vw 3vw;}
+      .royal-card{padding:5vw 2vw 7vw 2vw;}
+      .film-type-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        width: 100%;
+      }
+      .film-type-row select {
+        width: 100%;
+        min-width: 0;
+        max-width: 100vw;
+        font-size: 1em;
+        box-sizing: border-box;
+        padding: 10px 12px;
+      }
+      .popup{padding:26px 4vw 28px 4vw; min-width:160px;}
+    }
+    
+    @media (max-width: 600px) {
+      body, html {
+        width: 100vw !important;
+        overflow-x: hidden !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .main {
+        max-width: 100vw;
+        margin: 0;
+        padding: 0 2vw;
+      }
+      .royal-card {
+        padding: 4vw 2vw 6vw 2vw;
+        margin: 12px 0;
+        border-radius: 12px;
+      }
+      .section-title {
+        font-size: 1.1rem;
+        margin-bottom: 11px;
+        text-align: left;
+      }
+      .film-type-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 7px;
+        width: 100%;
+      }
+      .film-type-row label {
+        min-width: unset;
+        font-size: 1em;
+        margin-bottom: 2px;
+        width: 100%;
+      }
+      .film-type-row select {
+        width: 100%;
+        min-width: 0;
+        max-width: 100vw;
+        font-size: 1em;
+        box-sizing: border-box;
+        padding: 10px 12px;
+      }
+      .input-bar {
+        flex-direction: column;
+        gap: 7px;
+        width: 100%;
+        margin-bottom: 16px;
+      }
+      .input-bar input[type=number] {
+        width: 100%;
+        min-width: 0;
+        max-width: 100vw;
+        font-size: 1em;
+        padding: 10px 12px;
+        box-sizing: border-box;
+      }
+      .add-btn, .calc-btn {
+        width: 100%;
+        font-size: 1em;
+        padding: 13px 0;
+        margin-left: 0;
+        border-radius: 10px;
+        margin-top: 2px;
+      }
+      .grid {
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+      }
+      .arrow {
+        justify-content: center;
+        align-items: center;
+        margin: 8px 0;
+        font-size: 2em;
+        min-width: 0;
+        transform: rotate(0deg) !important;
+      }
+      .royal-table-card, .royal-table-card.final {
+        padding: 11px 2vw 13px 2vw;
+        min-width: 0;
+        border-radius: 10px;
+        min-height: 0;
+        font-size: 0.97em;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      table {
+        font-size: 0.96em;
+        width: 100%;
+        table-layout: fixed;
+      }
+      th, td {
+        font-size: 0.95em;
+        padding: 7px 2px;
+        word-break: break-all;
+        max-width: 100px;
+      }
+      th:last-child, td:last-child {
+        width: 32px !important;
+        min-width: 32px !important;
+        max-width: 32px !important;
+        padding-right: 0 !important;
+        overflow: visible !important;
+      }
+      .film-tooltip {
+        margin-left: 3px;
+        width: 17px;
+        height: 17px;
+        font-size: 14px;
+      }
+      .popup-bg {
+        align-items: flex-start;
+        padding-top: 20vw;
+      }
+      .popup {
+        min-width: unset;
+        max-width: 95vw;
+        padding: 14px 3vw 14px 3vw;
+        border-radius: 9px;
+        font-size: 1em;
+      }
+      .popup-title, .popup-detail, .popup-desc {
+        font-size: 1em;
+        margin-bottom: 5px;
+        word-break: break-word;
+      }
+      .popup-btns button {
+        font-size: 0.98em;
+        padding: 13px 0;
+        border-radius: 9px;
+      }
+      .result-card {
+        min-width: 0;
+        width: 100%;
+        padding: 16px 2vw 17px 2vw;
+        font-size: 1em;
+        border-radius: 10px;
+        word-break: break-word;
+        box-sizing: border-box;
+      }
+      .result-label, .result-value {
+        font-size: 1em !important;
+      }
+      .brand { font-size: 1.06rem; }
+      .royal-loader { width: 95vw; min-width: 0; padding: 19px 2vw 20px 2vw;}
+    }
+
+    
+    .__tooltip {
+      pointer-events:none;
+      position:fixed;
+      background: #fffbe9;
+      color: #2a2c37;
+      font-weight: 500;
+      font-size: 1em;
+      padding: 8px 14px;
+      border-radius: 9px;
+      box-shadow: 0 2px 13px 0 rgba(217,191,104,0.13);
+      border: 1.3px solid #f4e5c3;
+      white-space: pre;
+      z-index: 9999;
+      max-width: 370px;
+    }
+  </style>
+</head>
+<body>
+  <div class="main">
+    <div class="royal-card">
+      <div class="section-title">필름 주문 계산기</div>
+      <div class="film-type-row">
+        <label for="film-type">필름 종류</label>
+        <select id="film-type">
+          <option value="20b-800">[자외선 99% + 열 20%] 차단 - 블랙 (10cm당 800원)</option>
+          <option value="50b-1600">[자외선 99% + 열 50%] 차단 - 블랙 (10cm당 1600원)</option>
+          <option value="70b-2400">[자외선 99% + 열 70%] 차단 - 블랙 (10cm당 2400원)</option>
+          <option value="90b-3200">[자외선 99% + 열 90%] 차단 - 블랙 (10cm당 3200원)</option>
+          <option value="70s-2400">[자외선 99% + 열 70%] 차단 - 실버(미러) (10cm당 2400원)</option>
+        </select>
+      </div>
+      <div class="input-bar">
+        <input type="number" id="width" placeholder="가로(cm)" min="1" max="3000">
+        <input type="number" id="height" placeholder="세로(cm)" min="1" max="3000">
+        <input type="number" id="count" placeholder="수량" min="1" max="20">
+        <button class="add-btn" onclick="tryAddFilm()">추가</button>
+      </div>
+      <div class="grid">
+        <div class="royal-table-card">
+          <div class="card-title">필요한 필름 사이즈</div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width:44%;">필름 종류</th>
+                <th style="width:33%;">가로×세로</th>
+                <th style="width:23%;" colspan="2">수량</th>
+              </tr>
+            </thead>
+            <tbody id="need-list"></tbody>
+          </table>
+        </div>
+        <div class="arrow" id="direction-arrow">➜</div>
+        <div class="royal-table-card final">
+          <div class="card-title">최종 필름 사이즈</div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th style="width:44%;">필름 종류</th>
+                <th style="width:33%;">가로×세로</th>
+                <th style="width:23%;">수량</th>
+              </tr>
+            </thead>
+            <tbody id="final-list"></tbody>
+          </table>
+        </div>
+      </div>
+      <button class="calc-btn" onclick="onCalculate()">계산하기</button>
+      <div class="result-card" id="result-card"></div>
+    </div>
+  </div>
+  <!-- 팝업 -->
+  <div class="popup-bg" id="popup-bg">
+    <div class="popup" id="popup"></div>
+  </div>
+  <!-- 로딩바 -->
+    <div class="loading-bg" id="loading-bg">
+    <div class="royal-loader">
+        <div class="brand">필름 결제 수량을 계산하고 알려드릴게요!</div>
+        <div class="bar-wrap">
+        <div class="bar-inner"></div>
+        </div>
+        <div class="loading-text">최적화 배치 중 입니다...</div>
+    </div>
+    </div>
+  <script>
+    // 심플 이름과 전체 이름 분리
+    const filmTypes = {
+      "20b-800": { short:"20% 블랙", name: "[자외선 99% + 열 20%] 차단 - 블랙 (10cm당 800원)", price: 800 },
+      "50b-1600": { short:"50% 블랙", name: "[자외선 99% + 열 50%] 차단 - 블랙 (10cm당 1600원)", price: 1600 },
+      "70b-2400": { short:"70% 블랙", name: "[자외선 99% + 열 70%] 차단 - 블랙 (10cm당 2400원)", price: 2400 },
+      "90b-3200": { short:"90% 블랙", name: "[자외선 99% + 열 90%] 차단 - 블랙 (10cm당 3200원)", price: 3200 },
+      "70s-2400": { short:"70% 실버", name: "[자외선 99% + 열 70%] 차단 - 실버(미러) (10cm당 2400원)", price: 2400 },
+    };
+    let needFilms = [];
+    let finalFilms = [];
+    let lastResult = null;
+
+    function showLoading(next) {
+      document.getElementById('loading-bg').style.display = "block";
+      setTimeout(() => {
+        document.getElementById('loading-bg').style.display = "none";
+        if(next) next();
+      }, 2000);
+    }
+
+    function tryAddFilm() {
+    const type = document.getElementById('film-type').value;
+    const width = parseFloat(document.getElementById('width').value);
+    const height = parseFloat(document.getElementById('height').value);
+    const count = parseInt(document.getElementById('count').value) || 1;
+    if (!width || !height || !count || !type) {
+        alert('필름, 가로, 세로, 수량을 모두 입력하세요.');
+        return;
+    }
+    // 다른 필름이 이미 들어간 상태라면 추가 막기
+    if (needFilms.length > 0) {
+        const currentType = needFilms[0].type;
+        if (currentType !== type) {
+            alert('이미 추가한 필름 종류와 다르면 추가할 수 없습니다.');
+            return;
+        }
+    }
+    // 같은 항목 있는지 체크(분할 없는 상태만)
+    const existIdx = needFilms.findIndex(f => 
+        f.type === type &&
+        f.width === width &&
+        f.height === height &&
+        f.split === 'none'
+    );
+    if (width > 150 || height > 150) {
+        showSplitPopup({type,width,height,count});
+        return;
+    }
+    if (existIdx !== -1) {
+        needFilms[existIdx].count += count;
+    } else {
+        needFilms.push({type,width,height,count,split:'none'});
+    }
+    rerenderAll();
+    clearResult();
+    }
+
+    function showSplitPopup(film) {
+      const popup = document.getElementById('popup');
+      let splitChoices = '';
+      if (film.width > 150 && film.height > 150) {
+        splitChoices = `
+          <button onclick="chooseSplit('width')">가로 분할 (${Math.round(film.width/2*10)/10}cm ×2)</button>
+          <button onclick="chooseSplit('height')">세로 분할 (${Math.round(film.height/2*10)/10}cm ×2)</button>
+        `;
+      } else if (film.width > 150) {
+        splitChoices = `
+          <button onclick="chooseSplit('width')">가로 분할 (${Math.round(film.width/2*10)/10}cm ×2)</button>
+          <button class="gray-btn" onclick="chooseSplit('none')">길게 사용(분할 안함)</button>
+        `;
+      } else if (film.height > 150) {
+        splitChoices = `
+          <button onclick="chooseSplit('height')">세로 분할 (${Math.round(film.height/2*10)/10}cm ×2)</button>
+          <button class="gray-btn" onclick="chooseSplit('none')">길게 사용(분할 안함)</button>
+        `;
+      }
+      popup.innerHTML = `
+        <div class="popup-title">${filmTypes[film.type].short}</div>
+        <div class="popup-detail">${filmTypes[film.type].name}</div>
+        <div class="popup-detail">${film.width} × ${film.height}cm (${film.count}개)</div>
+        <div class="popup-desc">
+          ※ 가로 또는 세로가 150cm를 초과합니다.<br>
+          시공 및 운반을 위해 분할 또는 길게 사용 여부를 선택해주세요.
+        </div>
+        <div class="popup-btns">${splitChoices}</div>
+      `;
+      window._pendingFilm = film;
+      document.getElementById('popup-bg').style.display = "flex";
+    }
+    function chooseSplit(dir) {
+    document.getElementById('popup-bg').style.display = "none";
+    let film = window._pendingFilm;
+    if (!film) return;
+    film.split = dir;
+    // 같은 항목 있는지 체크 (split까지 포함!)
+    const existIdx = needFilms.findIndex(f =>
+        f.type === film.type &&
+        f.width === film.width &&
+        f.height === film.height &&
+        f.split === dir
+    );
+    if (existIdx !== -1) {
+        needFilms[existIdx].count += film.count;
+    } else {
+        needFilms.push(film);
+    }
+    rerenderAll();
+    clearResult();
+    }
+
+    function removeFilm(idx) {
+      needFilms.splice(idx,1);
+      rerenderAll();
+      clearResult();
+    }
+
+    function rerenderAll() {
+      renderNeedList();
+      calcFinalFilms();
+      renderFinalList();
+    }
+
+    function renderNeedList() {
+        const tbody = document.getElementById('need-list');
+        tbody.innerHTML = needFilms.length ? needFilms.map((f,i)=>
+        `<tr>
+            <td style="font-weight:700;">
+            <span class="film-short">${filmTypes[f.type].short}</span>
+            <span class="film-tooltip" data-full="${filmTypes[f.type].name}"><span>i</span></span>
+            </td>
+            <td>${f.width}×${f.height}</td>
+            <td colspan="2" style="position:relative;">
+            ${f.count}
+            <button class="del-btn" onclick="removeFilm(${i})" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);">&times;</button>
+            </td>
+        </tr>`
+        ).join('') : `<tr><td colspan="4" style="color:#bbb">추가된 필름 없음</td></tr>`;
+      // 툴팁
+      document.querySelectorAll('.film-tooltip').forEach(el=>{
+        el.onmouseenter = function(e) {
+          let tip = document.createElement('div');
+          tip.innerText = el.dataset.full;
+          tip.className = "__tooltip";
+          document.body.appendChild(tip);
+          function positionTip(ev) {
+            tip.style.left = (ev.clientX + 5) + "px";
+            tip.style.top = (ev.clientY + 13) + "px";
+          }
+          positionTip(e);
+          el.addEventListener('mousemove', positionTip);
+          el._tipHandler = positionTip;
+        }
+        el.onmouseleave = function() {
+          document.querySelectorAll('.__tooltip').forEach(e=>e.remove());
+          if (el._tipHandler) el.removeEventListener('mousemove', el._tipHandler);
+        }
+      });
+    }
+
+    function calcFinalFilms() {
+      finalFilms = [];
+      for (const f of needFilms) {
+        for (let i=0;i<f.count;i++) {
+          if (f.split === 'width') {
+            finalFilms.push({type:f.type, width:Math.round(f.width/2*10)/10, height:f.height, count:2});
+          } else if (f.split === 'height') {
+            finalFilms.push({type:f.type, width:f.width, height:Math.round(f.height/2*10)/10, count:2});
+          } else {
+            finalFilms.push({type:f.type, width:f.width, height:f.height, count:1});
+          }
+        }
+      }
+    }
+
+    function renderFinalList() {
+      const tbody = document.getElementById('final-list');
+      if (!finalFilms.length) {
+        tbody.innerHTML = `<tr><td colspan="3" style="color:#bbb">분할된(최종) 필름 없음</td></tr>`;
+        return;
+      }
+      let merged = {};
+      for (const f of finalFilms) {
+        let key = [f.type,f.width,f.height].join("-");
+        merged[key] = merged[key]||{type:f.type, width:f.width, height:f.height, count:0};
+        merged[key].count += f.count;
+      }
+      tbody.innerHTML = Object.values(merged).map(f=>
+        `<tr>
+          <td style="font-weight:700;">
+            <span class="film-short">${filmTypes[f.type].short}</span>
+            <span class="film-tooltip" data-full="${filmTypes[f.type].name}"><span>i</span></span>
+          </td>
+          <td>${f.width}×${f.height}</td>
+          <td>${f.count}</td>
+        </tr>`
+      ).join('');
+      // 툴팁
+      document.querySelectorAll('.film-tooltip').forEach(el=>{
+        el.onmouseenter = function(e) {
+          let tip = document.createElement('div');
+          tip.innerText = el.dataset.full;
+          tip.className = "__tooltip";
+          document.body.appendChild(tip);
+          function positionTip(ev) {
+            tip.style.left = (ev.clientX + 5) + "px";
+            tip.style.top = (ev.clientY + 13) + "px";
+          }
+          positionTip(e);
+          el.addEventListener('mousemove', positionTip);
+          el._tipHandler = positionTip;
+        }
+        el.onmouseleave = function() {
+          document.querySelectorAll('.__tooltip').forEach(e=>e.remove());
+          if (el._tipHandler) el.removeEventListener('mousemove', el._tipHandler);
+        }
+      });
+    }
+
+    function hybridPackOptimalTotalLength(rects, allowRotate = true) {
+      const CANVAS_WIDTH_CM = 150;
+      const MAX_CANVAS_LENGTH_CM = 3000;
+      function pruneFreeRects(freeRects) {
+        let pruned = [];
+        for (let i = 0; i < freeRects.length; i++) {
+          let a = freeRects[i];
+          let contained = false;
+          for (let j = 0; j < freeRects.length; j++) {
+            if (i === j) continue;
+            let b = freeRects[j];
+            if (
+              a.x >= b.x && a.y >= b.y &&
+              a.x + a.width <= b.x + b.width &&
+              a.y + a.height <= b.y + b.height
+            ) {
+              contained = true;
+              break;
+            }
+          }
+          if (!contained) pruned.push(a);
+        }
+        return pruned;
+      }
+      let packed = [];
+      let freeRects = [{
+        x: 0, y: 0,
+        width: CANVAS_WIDTH_CM,
+        height: MAX_CANVAS_LENGTH_CM
+      }];
+      rects = rects.slice().sort((a, b) => (b.width * b.height) - (a.width * a.height));
+      for (let idx = 0; idx < rects.length; idx++) {
+        const rect = rects[idx];
+        let best = null;
+        for (let i = 0; i < freeRects.length; i++) {
+          let fr = freeRects[i];
+          for (let rot of allowRotate ? [false, true] : [false]) {
+            let rw = rot ? rect.height : rect.width;
+            let rh = rot ? rect.width : rect.height;
+            if (rw <= fr.width && rh <= fr.height) {
+              let testPacked = [...packed, { ...rect, x: fr.x, y: fr.y, rot }];
+              let maxY = 0;
+              testPacked.forEach(r => {
+                maxY = Math.max(maxY, (r.y || 0) + (r.rot ? r.width : r.height));
+              });
+              if (
+                !best ||
+                maxY < best.maxY ||
+                (maxY === best.maxY && fr.y < best.frY) ||
+                (maxY === best.maxY && fr.y === best.frY && ((fr.width * fr.height) - (rw * rh)) < best.waste)
+              ) {
+                best = {
+                  idx: i,
+                  rot,
+                  rw, rh,
+                  frX: fr.x, frY: fr.y,
+                  maxY,
+                  waste: (fr.width * fr.height) - (rw * rh)
+                };
+              }
+            }
+          }
+        }
+        if (best) {
+          packed.push({ ...rect, x: best.frX, y: best.frY, rot: best.rot });
+          let fr = freeRects[best.idx];
+          let newRects = [];
+          if (fr.width > best.rw)
+            newRects.push({ x: fr.x + best.rw, y: fr.y, width: fr.width - best.rw, height: best.rh });
+          if (fr.height > best.rh)
+            newRects.push({ x: fr.x, y: fr.y + best.rh, width: fr.width, height: fr.height - best.rh });
+          freeRects.splice(best.idx, 1, ...newRects);
+          freeRects = pruneFreeRects(freeRects);
+        } else {
+          let maxY = packed.length ? Math.max(...packed.map(r => (r.y || 0) + (r.rot ? r.width : r.height))) : 0;
+          let rot = false, rw = rect.width, rh = rect.height;
+          if (allowRotate && rh < rw && rh <= CANVAS_WIDTH_CM) {
+            [rw, rh] = [rh, rw];
+            rot = true;
+          }
+          packed.push({ ...rect, x: 0, y: maxY, rot });
+          freeRects.push({ x: rw, y: maxY, width: CANVAS_WIDTH_CM - rw, height: rh });
+          freeRects.push({ x: 0, y: maxY + rh, width: CANVAS_WIDTH_CM, height: MAX_CANVAS_LENGTH_CM - (maxY + rh) });
+          freeRects = pruneFreeRects(freeRects);
+        }
+      }
+      return packed;
+    }
+
+    function onCalculate() {
+      if (finalFilms.length === 0) {
+        alert('필름을 먼저 추가해 주세요!');
+        return;
+      }
+      showLoading(() => {
+        let rects = [];
+        for (const f of finalFilms) {
+          for (let i = 0; i < f.count; i++) {
+            rects.push({ width: f.width, height: f.height });
+          }
+        }
+        if (rects.length === 0) {
+          showResult(0, 0);
+          return;
+        }
+        let packedRects = hybridPackOptimalTotalLength(rects, true);
+        let usedLength = 0;
+        packedRects.forEach(r => {
+          let y = r.y || 0;
+          let h = (r.rot ? r.width : r.height);
+          usedLength = Math.max(usedLength, y + h);
+        });
+        // ✅ 여기! 길이 제한 조건 추가!
+        if (usedLength > 3000) {
+            alert("총 제작 길이가 3000cm를 초과하여 제작할 수 없습니다.\n필름을 분할하거나 수량을 줄여주세요.");
+            return;
+        }
+        let totalOrder = Math.ceil(usedLength / 50);
+        showResult(usedLength, totalOrder);
+      });
+    }
+    function showResult(len, cnt) {
+    const card = document.getElementById('result-card');
+    // 주문수량 기준으로 50cm씩 끊어서 계산
+    let filmCostMap = {};
+    let totalFilmCost = 0;
+
+    // 종류별 총 주문수량 구하기
+    let orderCntPerType = {};
+    for (const f of finalFilms) {
+        let key = f.type;
+        if (!orderCntPerType[key]) orderCntPerType[key] = 0;
+        // (총 제작 길이 / 50cm = 총 주문수량) → 주문수량은 이미 cnt임, 종류별 나눔 필요
+        orderCntPerType[key] += f.count;
+    }
+
+    // 총 주문수량(=cnt) 만큼 주문 시, 각 주문마다 50cm씩 커팅되며,
+    // 각 커팅마다 (50/10=5) × 단가
+    Object.keys(orderCntPerType).forEach(type => {
+        let pricePer10cm = filmTypes[type].price;
+        let orderCount = cnt; // 전체 주문수량(50cm 단위)
+        let filmCost = orderCount * 5 * pricePer10cm;
+        filmCostMap[type] = filmCost;
+        totalFilmCost += filmCost;
+    });
+
+    let cuttingCost = cnt * 3300;
+    let total = totalFilmCost + cuttingCost;
+
+    let filmCostStr = Object.keys(filmCostMap).map(type =>
+        `${filmTypes[type].name} : <span style="font-weight:700; font-size:0.97em; color:#7d8598;">${filmCostMap[type].toLocaleString()}원</span>`
+    ).join('<br>');
+
+    card.innerHTML =
+    `<div>
+        <div class="result-label" style="margin-top:12px;">총 주문 수량 (50cm 당)</div>
+        <div class="result-value">${cnt ? cnt : "0"}<span style="font-size:0.62em;">개</span></div>
+        <div class="result-label" style="margin-top:17px;">총 금액</div>
+        <div class="result-value" style="font-size:2.3em;">${total.toLocaleString()}<span style="font-size:0.6em;">원</span></div>
+        <hr style="margin:28px 0 19px 0; border: none; border-top: 1.5px dashed #eee;">
+        <div class="result-label" style="margin-bottom:7px;font-size:1.01em;">썬팅필름 비용</div>
+        <div style="color:#7d8598; font-size:0.98em; margin-bottom:10px;line-height:1.6;">
+        ${filmCostStr}
+        </div>
+        <div class="result-label" style="margin-bottom:6px;font-size:1.01em;">맞춤재단 비용</div>
+        <div style="color:#7d8598; font-size:0.98em; margin-bottom:13px;">
+        ${cnt}개 × 3,300원 = <span style="font-weight:700; color:#7d8598; font-size:0.98em;">${cuttingCost.toLocaleString()}원</span>
+        </div>
+    </div>`;
+
+    card.style.display = "block";
+    lastResult = {len, cnt};
+    }
+
+    function updateArrowDirection() {
+      const arrow = document.getElementById('direction-arrow');
+      if (!arrow) return;
+      if (window.matchMedia("(max-width: 1030px)").matches) {
+        arrow.innerHTML = '↓'; // 또는 '↓' (더 깔끔하게)
+      } else {
+        arrow.innerHTML = '➜';
+      }
+    }
+    // 페이지 로드/리사이즈마다 호출
+    window.addEventListener('DOMContentLoaded', updateArrowDirection);
+    window.addEventListener('resize', updateArrowDirection);
+    window.addEventListener('orientationchange', updateArrowDirection);
+    document.addEventListener('visibilitychange', updateArrowDirection);
+
+    // iOS 키보드/viewport 관련 resize도 지원
+    window.visualViewport && window.visualViewport.addEventListener('resize', updateArrowDirection);
+    
+
+    function clearResult() {
+      document.getElementById('result-card').style.display = "none";
+    }
+    document.getElementById('popup-bg').addEventListener('mousedown', e => {
+      if (e.target === document.getElementById('popup-bg')) {
+        document.getElementById('popup-bg').style.display = "none";
+      }
+    });
+    document.getElementById('popup-bg').addEventListener('touchstart', function(e){
+      if (e.target === document.getElementById('popup-bg')) {
+        document.getElementById('popup-bg').style.display = "none";
+      }
+    });
+    rerenderAll();
+
+  </script>
+</body>
+</html>
